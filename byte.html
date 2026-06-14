@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>UBEC Training Attendance | Byteflow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Urbanist', sans-serif; }
+        .form-header-image { width: 100%; max-height: 200px; object-fit: cover; object-position: center; }
+        @media (min-width: 768px) { .form-header-image { max-height: 250px; } }
+        input[type="radio"], input[type="checkbox"] { accent-color: #0dc7dd; }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(13, 199, 221, 0.3);
+            border-color: #0dc7dd;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8 px-4">
+    <div class="max-w-3xl mx-auto">
+        <div class="bg-white rounded-t-xl shadow-xl overflow-hidden">
+            <div class="w-full" style="background: linear-gradient(135deg, #0dc7dd 0%, #0a9bb0 100%);">
+                <img src="Header.png" alt="UBEC Training Program Header" class="form-header-image w-full" style="aspect-ratio: 1600/400;">
+            </div>
+            
+            <div class="px-6 sm:px-8 pt-6 pb-4 border-b border-gray-200">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">UBEC Staff Training Program</h1>
+                <p class="text-gray-500 mt-1">Byteflow Training Attendance System</p>
+                <div class="text-xs text-gray-400 mt-3 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Program Timing: June 15th-19th, 2026</span>
+                </div>
+            </div>
+
+            <div id="todayBanner" class="m-6 p-4 rounded-lg border-l-4" style="border-left-color: #0dc7dd; background-color: rgba(13, 199, 221, 0.08);">
+                <p class="text-sm font-semibold" style="color: #0a9bb0;">📅 Today's Date: <span id="currentDate" class="font-bold">Loading...</span></p>
+                <p id="dayMessage" class="text-sm mt-1" style="color: #0a9bb0;"></p>
+            </div>
+
+            <form id="attendanceForm" class="px-6 sm:px-8 pb-8 space-y-6">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Full Name <span class="text-red-500">*</span></label>
+                    <input type="text" id="fullName" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0dc7dd] focus:border-[#0dc7dd] outline-none" placeholder="Enter your full name">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Email Address <span class="text-red-500">*</span></label>
+                    <input type="email" id="email" required class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0dc7dd] focus:border-[#0dc7dd] outline-none" placeholder="you@example.com">
+                    <p class="text-xs text-gray-400 mt-1">For attendance record purposes only (no emails will be sent).</p>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Designation/Position</label>
+                    <input type="text" id="position" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0dc7dd] focus:border-[#0dc7dd] outline-none" placeholder="e.g., Program Manager, Teacher, Administrator">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-3">Which day of the Training are you attending? <span class="text-red-500">*</span></label>
+                    <div id="dayOptions" class="space-y-3"></div>
+                    <p id="dayNote" class="text-xs mt-2"></p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <label class="flex items-start space-x-3 cursor-pointer">
+                        <input type="checkbox" id="consent" required class="w-5 h-5 rounded border-gray-300" style="accent-color: #0dc7dd;">
+                        <span class="text-gray-700 text-sm leading-relaxed">
+                            <span class="font-semibold">I confirm that my data is safe with Byteflow.</span>
+                            I understand this information is collected solely for UBEC training attendance purposes and will not be shared with any external parties.
+                        </span>
+                    </label>
+                </div>
+
+                <p class="text-xs text-gray-400">* Required field</p>
+
+                <button type="submit" id="submitBtn" class="w-full text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed" style="background-color: #0dc7dd;" onmouseover="this.style.backgroundColor='#0bb3c7'" onmouseout="this.style.backgroundColor='#0dc7dd'">Submit Attendance</button>
+
+                <div id="statusMsg" class="text-center text-sm hidden py-3 rounded-lg"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const TRAINING_DAYS = [
+            { day: 1, date: "2026-06-14", display: "Day 1: June 15, 2026 - Opening & Fundamentals" },
+            { day: 2, date: "2026-06-16", display: "Day 2: June 16, 2026 - Core Concepts" },
+            { day: 3, date: "2026-06-17", display: "Day 3: June 17, 2026 - Hands-on Practice" },
+            { day: 4, date: "2026-06-18", display: "Day 4: June 18, 2026 - Advanced Topics" },
+            { day: 5, date: "2026-06-19", display: "Day 5: June 19, 2026 - Assessment & Closing" }
+        ];
+
+        const SHEETDB_API = "https://sheetdb.io/api/v1/vq30jhcfkljis";
+        let realTodayDate = null;
+
+        async function getRealDate() {
+            try {
+                const response = await fetch('https://worldtimeapi.org/api/timezone/Africa/Lagos');
+                const data = await response.json();
+                const realDate = new Date(data.datetime);
+                return realDate.toISOString().split('T')[0];
+            } catch (error) {
+                const today = new Date();
+                return today.toISOString().split('T')[0];
+            }
+        }
+
+        async function renderDayOptions() {
+            realTodayDate = await getRealDate();
+            const dateObj = new Date(realTodayDate);
+            document.getElementById('currentDate').innerHTML = dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            const container = document.getElementById('dayOptions');
+            const todayTraining = TRAINING_DAYS.find(day => day.date === realTodayDate);
+            const note = document.getElementById('dayNote');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (todayTraining) {
+                container.innerHTML = TRAINING_DAYS.map(day => {
+                    const isToday = day.date === todayTraining.date;
+                    const isPast = day.date < realTodayDate;
+                    const isFuture = day.date > realTodayDate;
+                    return `
+                        <label class="flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition ${isToday ? 'border' : (isPast || isFuture ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50')}" style="${isToday ? 'background-color: rgba(13, 199, 221, 0.08); border-color: #0dc7dd;' : ''}">
+                            <input type="radio" name="trainingDay" value="${day.day}|${day.display}" ${isToday ? 'checked' : ''} ${isPast || isFuture ? 'disabled' : ''} class="w-4 h-4" style="accent-color: #0dc7dd;">
+                            <span class="flex-1 ${isToday ? 'font-semibold' : 'text-gray-700'}" style="${isToday ? 'color: #0a9bb0;' : ''}">
+                                ${day.display}
+                                ${isToday ? '<span class="ml-2 text-xs text-white px-2 py-0.5 rounded-full" style="background-color: #0dc7dd;">Today</span>' : ''}
+                                ${isPast ? '<span class="ml-2 text-xs text-gray-400">(Closed)</span>' : ''}
+                                ${isFuture ? '<span class="ml-2 text-xs text-orange-400">(Upcoming)</span>' : ''}
+                            </span>
+                        </label>
+                    `;
+                }).join('');
+                note.innerHTML = `✅ Today is ${todayTraining.display}. This day has been automatically selected.`;
+                submitBtn.disabled = false;
+            } else {
+                container.innerHTML = TRAINING_DAYS.map(day => {
+                    const isPast = day.date < realTodayDate;
+                    return `
+                        <label class="flex items-center space-x-3 p-3 rounded-lg bg-gray-50 opacity-60">
+                            <input type="radio" name="trainingDay" value="${day.day}|${day.display}" disabled class="w-4 h-4">
+                            <span class="text-gray-500">
+                                ${day.display}
+                                ${isPast ? '<span class="ml-2 text-xs text-gray-400">(Closed)</span>' : '<span class="ml-2 text-xs text-orange-400">(Coming soon)</span>'}
+                            </span>
+                        </label>
+                    `;
+                }).join('');
+                note.innerHTML = `⚠️ No training session scheduled for today (${realTodayDate}).`;
+                submitBtn.disabled = true;
+            }
+        }
+
+        document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const statusMsg = document.getElementById('statusMsg');
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const position = document.getElementById('position').value.trim() || 'Not specified';
+            const consent = document.getElementById('consent').checked;
+            
+            const selectedRadio = document.querySelector('input[name="trainingDay"]:checked');
+            if (!selectedRadio) {
+                statusMsg.className = 'text-center text-sm mt-4 p-3 bg-red-100 text-red-700 rounded-lg';
+                statusMsg.textContent = '❌ Please select a training day.';
+                statusMsg.classList.remove('hidden');
+                setTimeout(() => statusMsg.classList.add('hidden'), 3000);
+                return;
+            }
+            
+            const [dayNumber, dayDisplay] = selectedRadio.value.split('|');
+            
+            if (!consent) {
+                statusMsg.className = 'text-center text-sm mt-4 p-3 bg-red-100 text-red-700 rounded-lg';
+                statusMsg.textContent = '❌ You must agree to the data privacy terms.';
+                statusMsg.classList.remove('hidden');
+                setTimeout(() => statusMsg.classList.add('hidden'), 3000);
+                return;
+            }
+            
+            const submissionData = {
+                "Timestamp": new Date().toLocaleString('en-US', { timeZone: 'Africa/Lagos' }),
+                "Date": realTodayDate,
+                "Full Name": fullName,
+                "Email": email,
+                "Position": position,
+                "Training Day": dayDisplay,
+                "Day Number": dayNumber.toString(),
+                "Submission ID": Math.random().toString(36).substring(2, 15) + Date.now().toString(36)
+            };
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            statusMsg.classList.add('hidden');
+            
+            try {
+                const response = await fetch(SHEETDB_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(submissionData)
+                });
+                
+                const result = await response.json();
+                console.log('SheetDB Response:', result);
+                
+                // FIXED: Check if response is ok (status 200-299) - this means data saved
+                // Even if result.status isn't 'success', if response.ok is true, it worked
+                if (response.ok) {
+                    statusMsg.className = 'text-center text-sm mt-4 p-3 bg-green-100 text-green-700 rounded-lg';
+                    statusMsg.textContent = '✅ Attendance recorded successfully! Thank you for participating.';
+                    statusMsg.classList.remove('hidden');
+                    document.getElementById('attendanceForm').reset();
+                    
+                    // Re-render to keep the day selected
+                    if (selectedRadio && !selectedRadio.disabled) {
+                        // Keep the radio button selected if it's still today's day
+                        const todayTraining = TRAINING_DAYS.find(day => day.date === realTodayDate);
+                        if (todayTraining && selectedRadio.value === `${todayTraining.day}|${todayTraining.display}`) {
+                            // Keep it selected - do nothing
+                        } else {
+                            await renderDayOptions();
+                        }
+                    } else {
+                        await renderDayOptions();
+                    }
+                } else {
+                    let errorMsg = 'Submission failed. ';
+                    if (result.error === 'headers_not_found') {
+                        errorMsg = '❌ Column headers not found. Make sure your Google Sheet has these exact headers in Row 1: Timestamp, Date, Full Name, Email, Position, Training Day, Day Number, Submission ID';
+                    } else if (result.message) {
+                        errorMsg = result.message;
+                    }
+                    throw new Error(errorMsg);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusMsg.className = 'text-center text-sm mt-4 p-3 bg-red-100 text-red-700 rounded-lg';
+                statusMsg.textContent = error.message || '❌ Submission failed. Please try again.';
+                statusMsg.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Attendance';
+                setTimeout(() => {
+                    statusMsg.classList.add('hidden');
+                }, 5000);
+            }
+        });
+        
+        renderDayOptions();
+    </script>
+</body>
+</html>
